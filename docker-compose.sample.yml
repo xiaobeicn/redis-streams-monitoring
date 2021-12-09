@@ -1,6 +1,19 @@
 version: '3'
   
 services:
+  redis-streams-monitor:
+    container_name: redis-streams-monitor
+    image: chrnola/redis-streams-exporter:latest
+    networks:
+      - backend
+    ports:
+      - "3002:3000"
+    environment:
+      REDIS_CONNECTION_STRING: "${REDIS_CONNECTION_STRING}"
+      REDIS_STREAM_KEY: "${REDIS_STREAM_KEY}"
+      REDIS_POLL_INTERVAL_MS: "${REDIS_POLL_INTERVAL_MS}"
+      APP_ENABLE_VERBOSE_LOGGING: "${APP_ENABLE_VERBOSE_LOGGING}"
+      PROMETHEUS_PORT: "${PROMETHEUS_PORT}"
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -12,6 +25,8 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
       - '9090:9090'
+    depends_on:
+      - redis-streams-monitor
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -21,30 +36,6 @@ services:
       - backend
     depends_on:
     - prometheus
-  redis_streams_exporter1:
-    container_name: redis-streams-exporter1
-    image: chrnola/redis-streams-exporter:latest
-    environment:
-      REDIS_STREAM_KEY: "${REDIS_STREAM_KEY_1}"
-      REDIS_CONNECTION_STRING: "${REDIS_CONNECTION_STRING}"
-    networks:
-      - backend
-    ports:
-      - "3001:3000"
-    depends_on:
-      - prometheus
-  redis_streams_exporter2:
-    container_name: redis-streams-exporter2
-    image: chrnola/redis-streams-exporter:latest
-    environment:
-      REDIS_STREAM_KEY: "${REDIS_STREAM_KEY_2}"
-      REDIS_CONNECTION_STRING: "${REDIS_CONNECTION_STRING}"
-    networks:
-      - backend
-    ports:
-      - "3002:3000"
-    depends_on:
-      - prometheus
 
 networks:
   backend:
